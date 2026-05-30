@@ -1,0 +1,15 @@
+opencv-python
+numpy
+scikit-image
+scikit-learn
+joblib
+matplotlib
+scipy
+torch
+torchvision
+torchinfo
+tqdm
+flask
+flask-cors
+werkzeug
+pillow

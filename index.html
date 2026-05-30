@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reality Check AI - Image Authenticity Detector</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- ── Effect A: Dark Mode Toggle ─────────────────────────────
+         position:fixed, top:0 right:0, highest z-index so nothing overlaps -->
+    <div id="darkToggle" class="dark-toggle-btn" onclick="toggleDarkMode()">
+        <i id="darkIcon" class="fas fa-moon"></i>
+        <span id="darkModeLabel">Dark</span>
+        <div class="dark-toggle-track">
+            <div class="dark-toggle-thumb"></div>
+        </div>
+    </div>
+
+    <div class="container-fluid main-wrapper">
+        <div class="content-wrapper">
+            <div class="row g-2">
+
+                <!-- ── LEFT PANEL ────────────────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-elevated shadow-lg">
+                        <div class="card-header bg-gradient-primary">
+                            <h5 class="mb-0"><i class="fas fa-image"></i> Image Preview</h5>
+                        </div>
+                        <div class="card-body card-body-compact d-flex flex-column">
+
+                            <!-- Image preview box -->
+                            <div class="image-preview-container-compact mb-2">
+                                <div id="imagePreview" class="image-preview-box">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <p>No image selected</p>
+                                    </div>
+                                </div>
+                                <input type="file" id="imageInput" class="d-none" accept="image/*">
+                            </div>
+
+                            <!-- ── Effect D: Step Progress ──
+                                 Sits between image and drop zone in left panel -->
+                            <div id="analysisSteps" class="analysis-steps d-none mb-2"></div>
+
+                            <!-- Effect C — Drop zone pulse -->
+                            <div id="dropZone" class="drop-zone-compact mb-2">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag &amp; drop image or click to upload</p>
+                            </div>
+
+                            <div class="button-group mt-auto">
+                                <button id="analyzeBtn" class="btn btn-success btn-sm btn-hover w-100" disabled>
+                                    <i class="fas fa-magic"></i> Analyze
+                                </button>
+                            </div>
+
+                            <div id="fileInfo" class="alert alert-info-compact d-none mt-2 mb-0">
+                                <small id="fileName"></small>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── RIGHT PANEL ───────────────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-elevated shadow-lg">
+                        <div class="card-header bg-gradient-success">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Detection Results</h5>
+                            <!-- Effect I — Live badge -->
+                            <span id="liveBadge" class="live-badge"></span>
+                        </div>
+                        <div class="card-body card-body-compact">
+                            <div class="results-scrollable">
+                                <div class="results-scroll-inner">
+
+                                    <!-- Result Display -->
+                                    <div id="resultContainer" class="result-container-compact mb-2 text-center">
+                                        <p class="result-placeholder-compact">Select an image</p>
+                                    </div>
+
+                                    <!-- ── Effect F: Waveform Spinner ── -->
+                                    <div id="loadingSpinner" class="spinner-container-compact d-none mb-2">
+                                        <div class="waveform-wrap">
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                            <div class="wave-bar"></div>
+                                        </div>
+                                        <p class="mt-1 loading-text-compact">Analyzing...</p>
+                                    </div>
+
+                                    <!-- ── Effect E: Skeleton Loader ──
+                                         Shows while API call is in flight, hidden when results arrive -->
+                                    <div id="skeletonSection" class="d-none mb-2">
+                                        <div class="skel-block" style="height:56px;border-radius:10px;"></div>
+                                        <div class="skel-block mt-2" style="height:10px;width:100%;"></div>
+                                        <div class="skel-block mt-1" style="height:10px;width:75%;"></div>
+                                        <div class="skel-block mt-1" style="height:10px;width:85%;"></div>
+                                        <div class="skel-block mt-2" style="height:36px;border-radius:8px;"></div>
+                                        <div class="skel-block mt-1" style="height:36px;border-radius:8px;"></div>
+                                        <div class="skel-block mt-1" style="height:36px;border-radius:8px;"></div>
+                                    </div>
+
+                                    <!-- Confidence Score -->
+                                    <div id="confidenceSection" class="d-none mb-2">
+                                        <label class="confidence-label-compact">
+                                            <i class="fas fa-percent"></i> Confidence
+                                        </label>
+                                        <div class="confidence-bar-container">
+                                            <div id="confidenceBar" class="confidence-bar"></div>
+                                        </div>
+                                        <p id="confidenceText" class="text-center mt-1 confidence-text-compact"></p>
+                                    </div>
+
+                                    <!-- Stat Pills -->
+                                    <div id="statPillsSection" class="d-none mb-2"></div>
+
+                                    <!-- Branch Analysis -->
+                                    <div id="branchSection" class="d-none mb-2">
+                                        <div class="branch-header">
+                                            <i class="fas fa-code-branch"></i> Branch Analysis
+                                        </div>
+                                        <div id="branchDetails" class="branch-details"></div>
+                                    </div>
+
+                                    <!-- View Chart Button -->
+                                    <div id="chartBtnSection" class="d-none mb-2">
+                                        <button id="viewChartBtn" class="btn btn-outline-secondary btn-sm w-100"
+                                                data-bs-toggle="modal" data-bs-target="#chartModal">
+                                            <i class="fas fa-chart-pie"></i> View Detection Chart
+                                        </button>
+                                    </div>
+
+                                    <!-- Analysis Summary -->
+                                    <div id="descriptionSection" class="d-none mb-2">
+                                        <div class="desc-header">
+                                            <i class="fas fa-file-alt"></i> Analysis Summary
+                                        </div>
+                                        <div id="descriptionContent" class="desc-content"></div>
+                                    </div>
+
+                                </div><!-- end results-scroll-inner -->
+                            </div><!-- end results-scrollable -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Modal -->
+    <div class="modal fade" id="chartModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-chart-pie"></i> Detection Analysis Chart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="chart-grid">
+                        <div class="chart-box"><h6 class="chart-title">Overall Verdict</h6><canvas id="verdictChart"></canvas></div>
+                        <div class="chart-box"><h6 class="chart-title">Branch Confidence Scores</h6><canvas id="branchChart"></canvas></div>
+                        <div class="chart-box"><h6 class="chart-title">Branch Weights</h6><canvas id="weightsChart"></canvas></div>
+                        <div class="chart-box"><h6 class="chart-title">Model Comparison</h6><canvas id="modelChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
