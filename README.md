@@ -19,7 +19,7 @@ Reality Check AI aims to improve trust in digital content by providing a forensi
 ---
 ## 📸 Screenshots
 
-<img src="screenshots/ai-detection.png" width="100%" />
+<img src="screenshots/121612.png.png" width="100%" />
 
 <img src="screenshots/real-detection.png" width="100%" />
 
