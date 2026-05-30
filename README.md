@@ -17,6 +17,14 @@ Misinformation, deepfakes, synthetic media, and manipulated content can easily s
 Reality Check AI aims to improve trust in digital content by providing a forensic-based image verification system.
 
 ---
+## 📸 Screenshots
+
+<img src="screenshots/ai-detection.png" width="100%" />
+
+<img src="screenshots/real-detection.png" width="100%" />
+
+<img src="screenshots/dashboard.png" width="100%" />
+
 
 ## Features
 
